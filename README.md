@@ -95,7 +95,7 @@ store.csv ──┘
 ```
 
 ---
-You can add a **Data Architecture section** to your README explaining the **SQL Server Medallion Architecture (Bronze–Silver–Gold)** you used. Here is a clean version **without `##` or bold formatting** so it matches your previous formatting.
+
 
 ---
 
