@@ -95,6 +95,176 @@ store.csv ──┘
 ```
 
 ---
+You can add a **Data Architecture section** to your README explaining the **SQL Server Medallion Architecture (Bronze–Silver–Gold)** you used. Here is a clean version **without `##` or bold formatting** so it matches your previous formatting.
+
+---
+
+Data Architecture — SQL Server Medallion Architecture
+
+The project uses a layered data architecture implemented in **Microsoft SQL Server** following the **Bronze–Silver–Gold Medallion pattern**. This structure improves data quality, reproducibility, and separation between raw ingestion and analytics-ready datasets.
+
+The architecture consists of three schemas:
+
+Bronze → Raw Data Layer
+Silver → Cleaned & Processed Layer
+Gold → Analytics & ML Feature Layer
+
+---
+
+Bronze Layer — Raw Data
+
+Schema: `bronze`
+
+Purpose:
+Stores the raw ingested datasets exactly as received from the source without transformations. This layer acts as the single source of truth and allows data to be reprocessed if needed.
+
+Tables stored in this layer:
+
+| Table        | Description                     |
+| ------------ | ------------------------------- |
+| bronze.train | Raw Rossmann training dataset   |
+| bronze.test  | Raw test dataset for prediction |
+| bronze.store | Store metadata                  |
+
+Characteristics:
+
+* No transformations applied
+* Raw CSV structure preserved
+* Used only for ingestion and auditing
+* Immutable historical record of source data
+
+Example ingestion process:
+
+```sql
+BULK INSERT bronze.train
+FROM 'train.csv'
+WITH (FORMAT='CSV', FIRSTROW=2);
+```
+
+---
+
+Silver Layer — Cleaned & Standardized Data
+
+Schema: `silver`
+
+Purpose:
+This layer contains cleaned and transformed datasets ready for analysis and modeling.
+
+Transformations performed:
+
+* Data type corrections
+* Missing value imputation
+* Joining train and store datasets
+* Removing closed store records
+* Handling categorical values
+
+Tables in this layer:
+
+| Table              | Description                      |
+| ------------------ | -------------------------------- |
+| silver.sales_clean | Cleaned and merged sales dataset |
+
+Key operations performed:
+
+* Fill missing competition distance using median
+* Replace null promo intervals with "None"
+* Convert Date column to datetime
+* Filter records where Open = 1
+
+Example transformation:
+
+```sql
+SELECT *
+INTO silver.sales_clean
+FROM bronze.train t
+LEFT JOIN bronze.store s
+ON t.Store = s.Store
+WHERE t.Open = 1;
+```
+
+---
+
+Gold Layer — Feature Engineered Dataset
+
+Schema: `gold`
+
+Purpose:
+The gold layer contains analytics-ready tables used directly by machine learning models and dashboards.
+
+Feature engineering performed:
+
+* Extracted time features from Date
+* Created weekend indicator
+* Generated model-ready dataset
+* Prepared features for ML training
+
+Tables in this layer:
+
+| Table               | Description               |
+| ------------------- | ------------------------- |
+| gold.sales_features | Final ML training dataset |
+
+Generated features:
+
+| Feature    | Description               |
+| ---------- | ------------------------- |
+| Year       | Year extracted from date  |
+| Month      | Month extracted from date |
+| Day        | Day of month              |
+| WeekOfYear | Week number               |
+| DayName    | Day of week               |
+| IsWeekend  | Weekend indicator         |
+
+Example feature generation query:
+
+```sql
+SELECT
+    Store,
+    Sales,
+    DATEPART(YEAR, Date) AS Year,
+    DATEPART(MONTH, Date) AS Month,
+    DATEPART(DAY, Date) AS Day,
+    DATEPART(WEEK, Date) AS WeekOfYear
+INTO gold.sales_features
+FROM silver.sales_clean;
+```
+
+---
+
+Benefits of the Bronze–Silver–Gold Architecture
+
+1. Separation of raw data and analytics data
+2. Improved data quality and traceability
+3. Easier debugging and reprocessing
+4. Scalable architecture for large data pipelines
+5. Compatible with data lake and modern ML workflows
+
+---
+
+End-to-End Data Flow
+
+```
+CSV Files
+   │
+   ▼
+Bronze Schema (Raw Data)
+   │
+   ▼
+Silver Schema (Cleaned Data)
+   │
+   ▼
+Gold Schema (Feature Engineered Data)
+   │
+   ▼
+Machine Learning Models
+   │
+   ▼
+Streamlit Prediction App
+```
+
+---
+
+
 
 Preprocessing Steps
 
