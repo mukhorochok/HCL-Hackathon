@@ -61,7 +61,7 @@ Project Pipeline
 
 ```
 train.csv ──┐
-test.csv  ──┤── Merge on Store ──► Preprocessing ──► Feature Engineering
+             ┤── Merge on Store ──► Preprocessing ──► Feature Engineering
 store.csv ──┘
                                           │
                                           ▼
