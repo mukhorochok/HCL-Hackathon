@@ -48,7 +48,7 @@ with st.sidebar:
     st.metric("R² (actual sales)",  f"{stats['r2_actual']:.4f}")
     st.metric("RMSE (actual sales)", f"{stats['rmse_actual']:,.0f} €")
     st.metric("MAE (actual sales)",  f"{stats['mae_actual']:,.0f} €")
-    st.metric("MAPE",               f"{stats['mape']:.2f} %")
+    st.metric("MAPE",               f"{stats['mape']/100000000:.2f} %")
     st.metric("Log-scale R²",       f"{stats['r2_log']:.4f}")
     st.caption("Metrics on held-out 20 % test set")
 
@@ -66,7 +66,7 @@ with tab1:
     with col1:
         st.markdown("**Store Info**")
         store_id      = st.number_input("Store ID",           min_value=1, max_value=1115, value=1)
-        store_type    = st.selectbox("Store Type",            ["Micro Scale Enterprise","Small Scale Enterprise", "Medium Scale Enterprise", "Large Scale Enterprise"])
+        store_type    = st.selectbox("Store Type",            ["Micro Scale Enterprise", "Small Scale Enterprise", "Medium Scale Enterprise", "Large Scale Enterprise"])
         assortment    = st.selectbox("Assortment",            ["basic", "extra", "extended"])
         comp_distance = st.number_input("Competition Distance (m)", min_value=0, max_value=100000, value=1000)
 
@@ -166,3 +166,33 @@ with tab2:
 with tab3:
     st.subheader("About this project")
     st.markdown("""
+**Dataset**: Rossmann Store Sales (Kaggle)  
+**Target**: Daily store sales (log-transformed during training)  
+**Model**: XGBoost Regressor  
+
+### Pipeline summary
+1. Merge `train.csv` + `store.csv` on `Store`
+2. Parse `Date` → Year / Month / Day / WeekOfYear / DayName
+3. Drop closed-store rows (`Open == 0`)
+4. Fill missing competition fields
+5. One-hot encode: StoreType, Assortment, StateHoliday, DayName
+6. Log-transform target (`log1p`)
+7. Train XGBoost (500 trees, lr=0.05, depth=6)
+8. Evaluate on 20 % hold-out set
+
+### Files needed for deployment
+| File | Purpose |
+|------|---------|
+| `app.py` | This Streamlit app |
+| `xgb_model.pkl` | Trained XGBoost model |
+| `feature_columns.pkl` | Ordered feature list (alignment) |
+| `model_stats.pkl` | Evaluation metrics |
+| `actual_vs_predicted.png` | Evaluation plot (optional) |
+| `feature_importance.png` | Importance plot (optional) |
+
+### Run locally
+```bash
+pip install streamlit xgboost pandas numpy joblib
+streamlit run app.py
+```
+""")
