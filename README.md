@@ -94,10 +94,6 @@ store.csv ──┘
                                RMSE · MAE · R² · RMSPE
 ```
 
----
-
-
----
 
 Data Architecture — SQL Server Medallion Architecture
 
