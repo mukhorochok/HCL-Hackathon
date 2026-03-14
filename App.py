@@ -61,31 +61,23 @@ tab1, tab2, tab3 = st.tabs(["🔮 Predict", "📈 Model Insights", "ℹ️ About
 with tab1:
     st.subheader("Input Store & Date Details")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
     with col1:
         st.markdown("**Store Info**")
         store_id      = st.number_input("Store ID",           min_value=1, max_value=1115, value=1)
-        store_type    = st.selectbox("Store Type",            ["Store Type A", "Store Type B", "Store Type C", "Store Type D"])
+        store_type    = st.selectbox("Store Type",            ["Micro Scale Enterprise","Small Scale Enterprise", "Medium Scale Enterprise", "Large Scale Enterprise"])
         assortment    = st.selectbox("Assortment",            ["basic", "extra", "extended"])
         comp_distance = st.number_input("Competition Distance (m)", min_value=0, max_value=100000, value=1000)
 
     with col2:
-        st.markdown("**Date & Promotions**")
+        st.markdown("**Date & Holiday Info**")
         import datetime
         date_input   = st.date_input("Date", value=datetime.date.today())
-        promo        = st.selectbox("Promo Active?",          [1, 0], format_func=lambda x: "Yes" if x else "No")
-        promo2       = st.selectbox("Promo2 Active?",         [0, 1], format_func=lambda x: "Yes" if x else "No")
-        promo_interval = st.selectbox("Promo2 Interval",      ["None", "Jan,Apr,Jul,Oct", "Feb,May,Aug,Nov", "Mar,Jun,Sept,Dec"])
-
-    with col3:
-        st.markdown("**Holiday & Competition**")
         state_holiday   = st.selectbox("State Holiday",       ["No Holiday", "Public Holiday", "Easter", "Christmas"])
         school_holiday  = st.selectbox("School Holiday",      [0, 1], format_func=lambda x: "Yes" if x else "No")
         comp_open_month = st.number_input("Competition Open Since Month", min_value=0, max_value=12, value=0)
         comp_open_year  = st.number_input("Competition Open Since Year",  min_value=0, max_value=2025, value=0)
-        promo2_week     = st.number_input("Promo2 Since Week", min_value=0, max_value=52, value=0)
-        promo2_year     = st.number_input("Promo2 Since Year", min_value=0, max_value=2025, value=0)
 
     st.divider()
 
@@ -110,17 +102,12 @@ with tab1:
             "DayOfWeek"                : day_of_week,
             "Customers"                : 0,           # unknown at predict time
             "Open"                     : 1,
-            "Promo"                    : promo,
             "SchoolHoliday"            : school_holiday,
             "StoreType"                : store_type,
             "Assortment"               : assortment,
             "CompetitionDistance"      : comp_distance,
             "CompetitionOpenSinceMonth": comp_open_month,
             "CompetitionOpenSinceYear" : comp_open_year,
-            "Promo2"                   : promo2,
-            "Promo2SinceWeek"          : promo2_week,
-            "Promo2SinceYear"          : promo2_year,
-            "PromoInterval"            : promo_interval,
             "Year"                     : year,
             "Month"                    : month,
             "Day"                      : day,
@@ -133,7 +120,7 @@ with tab1:
         df_input = pd.DataFrame([raw])
 
         # One-hot encode
-        cat_cols = ["StoreType", "Assortment", "StateHoliday", "PromoInterval", "DayName"]
+        cat_cols = ["StoreType", "Assortment", "StateHoliday", "DayName"]
         df_enc   = pd.get_dummies(df_input, columns=cat_cols, drop_first=True)
 
         # Align to training feature columns
@@ -179,33 +166,3 @@ with tab2:
 with tab3:
     st.subheader("About this project")
     st.markdown("""
-**Dataset**: Rossmann Store Sales (Kaggle)  
-**Target**: Daily store sales (log-transformed during training)  
-**Model**: XGBoost Regressor  
-
-### Pipeline summary
-1. Merge `train.csv` + `store.csv` on `Store`
-2. Parse `Date` → Year / Month / Day / WeekOfYear / DayName
-3. Drop closed-store rows (`Open == 0`)
-4. Fill missing competition & promo fields
-5. One-hot encode: StoreType, Assortment, StateHoliday, PromoInterval, DayName
-6. Log-transform target (`log1p`)
-7. Train XGBoost (500 trees, lr=0.05, depth=6)
-8. Evaluate on 20 % hold-out set
-
-### Files needed for deployment
-| File | Purpose |
-|------|---------|
-| `app.py` | This Streamlit app |
-| `xgb_model.pkl` | Trained XGBoost model |
-| `feature_columns.pkl` | Ordered feature list (alignment) |
-| `model_stats.pkl` | Evaluation metrics |
-| `actual_vs_predicted.png` | Evaluation plot (optional) |
-| `feature_importance.png` | Importance plot (optional) |
-
-### Run locally
-```bash
-pip install streamlit xgboost pandas numpy joblib
-streamlit run app.py
-```
-""")
