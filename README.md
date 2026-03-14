@@ -36,7 +36,6 @@ Dataset
 | File      | Rows      | Description                                        |
 | --------- | --------- | -------------------------------------------------- |
 | train.csv | 1,017,209 | Daily sales records per store with target variable |
-| test.csv  | 41,088    | Unseen dates for final prediction                  |
 | store.csv | 1,115     | Store metadata — type, competition, promotions     |
 
 Source:
